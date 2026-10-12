@@ -1,5 +1,6 @@
 #include "crypto.hpp"
 
+#include <map>
 #include <random>
 #include <stdexcept>
 
@@ -107,6 +108,63 @@ GcdExample generate_gcd_example(bool prime_numbers) {
     const long long a = prime_numbers ? generate_probable_prime() : random_number(1, max_number);
     const long long b = prime_numbers ? generate_probable_prime() : random_number(1, max_number);
     return {a, b, extended_gcd(a, b)};
+}
+
+std::optional<long long> discrete_log(long long a, long long y, long long p) {
+    if (p < 2 || p > max_number || a < 1 || a >= p || y < 0 || y >= p) {
+        throw std::invalid_argument("Нужны 2 <= p <= 2000000000, 1 <= a < p, 0 <= y < p.");
+    }
+    if (extended_gcd(a, p).gcd != 1) {
+        throw std::invalid_argument("Этот вариант алгоритма требует НОД(a, p) = 1.");
+    }
+    if (y == 1) {
+        return 0;
+    }
+    if (y == 0) {
+        return std::nullopt;
+    }
+
+    // m = floor(sqrt(p)) + 1, поэтому m*m > p (лекция 1, страница 64).
+    long long m = 1;
+    while (m * m <= p) {
+        ++m;
+    }
+
+    // Шаги младенца: y, y*a, y*a^2, ..., y*a^(m-1).
+    std::map<long long, long long> baby_steps;
+    long long value = y;
+    for (long long j = 0; j < m; ++j) {
+        // При совпадении остатков оставляем большее j: оно даёт меньшее x.
+        baby_steps[value] = j;
+        value = value * a % p;
+    }
+
+    const long long factor = mod_pow(a, m, p);
+    long long giant = factor;
+    // Шаги великана: a^m, a^(2m), ..., a^(m*m).
+    for (long long i = 1; i <= m; ++i) {
+        const auto found = baby_steps.find(giant);
+        if (found != baby_steps.end()) {
+            const long long x = i * m - found->second;
+            if (x < p) {
+                return x;
+            }
+        }
+        giant = giant * factor % p;
+    }
+    return std::nullopt;
+}
+
+DiscreteLogExample generate_discrete_log_example() {
+    const long long p = generate_probable_prime();
+    long long a;
+    do {
+        a = random_number(1, p - 1);
+    } while (extended_gcd(a, p).gcd != 1);
+
+    const long long source_exponent = random_number(0, p - 2);
+    const long long y = mod_pow(a, source_exponent, p);
+    return {a, y, p, source_exponent};
 }
 
 } // namespace crypto

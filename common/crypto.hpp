@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 namespace crypto {
 
 // Произведение двух чисел этого диапазона помещается в long long.
@@ -18,6 +20,13 @@ struct GcdExample {
     GcdResult result;
 };
 
+struct DiscreteLogExample {
+    long long a;
+    long long y;
+    long long p;
+    long long source_exponent;
+};
+
 // |a| <= max_number, 0 <= exponent <= max_number, 1 <= modulus <= max_number.
 long long mod_pow(long long a, long long exponent, long long modulus);
 
@@ -31,5 +40,12 @@ GcdResult extended_gcd(long long a, long long b);
 long long random_number(long long low, long long high);
 long long generate_probable_prime();
 GcdExample generate_gcd_example(bool prime_numbers);
+
+// BSGS: минимальный x >= 0 для a^x mod p = y; nullopt, если решения нет.
+// 2 <= p <= max_number, 1 <= a < p, 0 <= y < p, gcd(a, p) = 1.
+std::optional<long long> discrete_log(long long a, long long y, long long p);
+
+// Генерирует разрешимый пример; поиск x выполняется отдельно по a, y, p.
+DiscreteLogExample generate_discrete_log_example();
 
 } // namespace crypto
