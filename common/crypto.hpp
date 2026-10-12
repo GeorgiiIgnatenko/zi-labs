@@ -27,6 +27,20 @@ struct DiscreteLogExample {
     long long source_exponent;
 };
 
+struct DiffieHellmanParameters {
+    long long p;
+    long long g;
+    long long x_a;
+    long long x_b;
+};
+
+struct DiffieHellmanResult {
+    long long y_a;
+    long long y_b;
+    long long z_a;
+    long long z_b;
+};
+
 // |a| <= max_number, 0 <= exponent <= max_number, 1 <= modulus <= max_number.
 long long mod_pow(long long a, long long exponent, long long modulus);
 
@@ -47,5 +61,20 @@ std::optional<long long> discrete_log(long long a, long long y, long long p);
 
 // Генерирует разрешимый пример; поиск x выполняется отдельно по a, y, p.
 DiscreteLogExample generate_discrete_log_example();
+
+// Точная проверка перебором делителей для |n| <= max_number.
+// Отдельная функция: вероятностный тест Ферма первой лабы не меняется.
+bool is_prime(long long n);
+
+// Для простого p проверяет, что степени g порождают все ненулевые остатки.
+// |g|, |p| <= max_number; непростой p или g вне [1, p-1] дают false.
+bool is_primitive_root(long long g, long long p);
+
+// Простое 5 <= p <= max_number, первообразный 2 <= g <= p-2,
+// 2 <= x_a, x_b <= p-1. Оба общих ключа вычисляются независимо.
+DiffieHellmanResult diffie_hellman(long long p, long long g, long long x_a, long long x_b);
+
+// Выбирает простые p=2q+1 и q, подходящее g и оба секрета внутри функции.
+DiffieHellmanParameters generate_diffie_hellman_parameters();
 
 } // namespace crypto

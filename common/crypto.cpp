@@ -167,4 +167,84 @@ DiscreteLogExample generate_discrete_log_example() {
     return {a, y, p, source_exponent};
 }
 
+bool is_prime(long long n) {
+    check_range(n);
+    if (n < 2) {
+        return false;
+    }
+    if (n % 2 == 0) {
+        return n == 2;
+    }
+    for (long long divisor = 3; divisor <= n / divisor; divisor += 2) {
+        if (n % divisor == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_primitive_root(long long g, long long p) {
+    check_range(g);
+    check_range(p);
+    if (p < 2 || g < 1 || g >= p || !is_prime(p)) {
+        return false;
+    }
+
+    long long remaining = p - 1;
+    // Для каждого различного простого делителя r числа p-1 проверяем порядок g.
+    for (long long divisor = 2; divisor <= remaining / divisor; ++divisor) {
+        if (remaining % divisor == 0) {
+            if (mod_pow(g, (p - 1) / divisor, p) == 1) {
+                return false;
+            }
+            do {
+                remaining /= divisor;
+            } while (remaining % divisor == 0);
+        }
+    }
+    // После деления мог остаться ещё один простой множитель.
+    return remaining == 1 || mod_pow(g, (p - 1) / remaining, p) != 1;
+}
+
+DiffieHellmanResult diffie_hellman(long long p, long long g, long long x_a, long long x_b) {
+    if (p < 5 || p > max_number) {
+        throw std::invalid_argument("Нужно 5 <= p <= 2000000000.");
+    }
+    if (g < 2 || g > p - 2 || x_a < 2 || x_a > p - 1 || x_b < 2 || x_b > p - 1) {
+        throw std::invalid_argument("Нужны 2 <= g <= p-2 и 2 <= X_A, X_B <= p-1.");
+    }
+    if (!is_prime(p)) {
+        throw std::invalid_argument("Модуль p должен быть простым числом.");
+    }
+    if (!is_primitive_root(g, p)) {
+        throw std::invalid_argument("g должно быть первообразным корнем по модулю p.");
+    }
+
+    const long long y_a = mod_pow(g, x_a, p);
+    const long long y_b = mod_pow(g, x_b, p);
+    // Каждая сторона использует свой секрет и открытое число другой стороны.
+    const long long z_a = mod_pow(y_b, x_a, p);
+    const long long z_b = mod_pow(y_a, x_b, p);
+    return {y_a, y_b, z_a, z_b};
+}
+
+DiffieHellmanParameters generate_diffie_hellman_parameters() {
+    long long q;
+    long long p;
+    do {
+        // Такой диапазон q даёт p порядка 10^9 в пределах max_number.
+        q = random_number(max_number / 4, (max_number - 1) / 2);
+        p = 2 * q + 1;
+    } while (!is_prime(q) || !is_prime(p));
+
+    long long g;
+    do {
+        g = random_number(2, p - 2);
+    } while (mod_pow(g, q, p) == 1);
+
+    const long long x_a = random_number(2, p - 1);
+    const long long x_b = random_number(2, p - 1);
+    return {p, g, x_a, x_b};
+}
+
 } // namespace crypto

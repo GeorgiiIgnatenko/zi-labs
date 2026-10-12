@@ -40,6 +40,24 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab02/tests.cpp common/crypto.c
 - [Короткое описание и примеры](labs/lab02/README.md).
 - [Подробный локальный отчёт](local/reports/lab02.md) — не входит в Git.
 
+## Третья лабораторная
+
+```sh
+mkdir -p build
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab03/main.cpp common/crypto.cpp -o build/lab03
+./build/lab03
+```
+
+Согласование общего ключа по схеме Диффи — Хеллмана. Есть ручной ввод, генерация параметров p=2q+1 и готовый пример из лекции. Программа показывает открытые значения и независимое вычисление одного и того же ключа двумя сторонами.
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab03/tests.cpp common/crypto.cpp -o build/lab03_tests
+./build/lab03_tests
+```
+
+- [Описание, условия и примеры](labs/lab03/README.md).
+- [Подробный локальный отчёт](local/reports/lab03.md) — не входит в Git.
+
 ## Где что лежит
 
 | Папка / файл | Назначение |
@@ -49,6 +67,7 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab02/tests.cpp common/crypto.c
 | `common/` | Общая библиотека для всех лабораторных |
 | `labs/lab01/` | Меню и проверки первой лабораторной |
 | `labs/lab02/` | Меню и проверки второй лабораторной |
+| `labs/lab03/` | Меню и проверки третьей лабораторной |
 | `templates/lab/` | Простой макет для следующей лабораторной |
 | `templates/report.md` | Единый план подробного отчёта |
 | `local/` | Личные отчёты, исходные копии примеров, результаты проверок; игнорируется Git |
@@ -67,12 +86,12 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab02/tests.cpp common/crypto.c
 ```sh
 openspec list --specs
 openspec validate --all --strict --no-interactive
-openspec new change lab03-diffie-hellman
-openspec status --change lab03-diffie-hellman
-openspec instructions proposal --change lab03-diffie-hellman
+openspec new change lab04-shamir
+openspec status --change lab04-shamir
+openspec instructions proposal --change lab04-shamir
 ```
 
-Последние три команды — для начала третьей лабораторной, она пока не реализована. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab03-diffie-hellman --yes`. Обновляется `openspec/progress.md`.
+Последние три команды — для начала четвёртой лабораторной, она пока не реализована. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab04-shamir --yes`. Обновляется `openspec/progress.md`.
 
 Это сохранённые сведения о проекте, а не автоматическая запись всех сообщений чата: решения и прогресс нужно поддерживать актуальными. Формат и команды: [официальная документация OpenSpec](https://github.com/Fission-AI/OpenSpec/blob/main/docs/cli.md).
 
