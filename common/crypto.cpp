@@ -247,4 +247,61 @@ DiffieHellmanParameters generate_diffie_hellman_parameters() {
     return {p, g, x_a, x_b};
 }
 
+long long mod_inverse(long long a, long long modulus) {
+    if (modulus < 2 || modulus > max_number || a < 1 || a >= modulus) {
+        throw std::invalid_argument("Нужны 2 <= модуль <= 2000000000 и 1 <= a < модуля.");
+    }
+    const auto result = extended_gcd(a, modulus);
+    if (result.gcd != 1) {
+        throw std::invalid_argument("Обратное число существует только при НОД(a, модуль) = 1.");
+    }
+    return (result.x % modulus + modulus) % modulus;
+}
+
+ShamirParameters make_shamir_parameters(long long p, long long c_a, long long c_b) {
+    if (p < 5 || p > max_number || !is_prime(p)) {
+        throw std::invalid_argument("Для Шамира нужно простое p от 5 до 2000000000.");
+    }
+    if (c_a <= 2 || c_a >= p - 1 || c_b <= 2 || c_b >= p - 1) {
+        throw std::invalid_argument("Нужны 2 < C_A, C_B < p-1.");
+    }
+    return {p, c_a, c_b, mod_inverse(c_a, p - 1), mod_inverse(c_b, p - 1)};
+}
+
+ShamirParameters generate_shamir_parameters() {
+    long long p;
+    do {
+        p = random_number(1'000'000'000, max_number);
+    } while (!is_prime(p));
+    const auto choose_exponent = [p]() {
+        long long c;
+        do {
+            c = random_number(3, p - 2);
+        } while (extended_gcd(c, p - 1).gcd != 1);
+        return c;
+    };
+    return make_shamir_parameters(p, choose_exponent(), choose_exponent());
+}
+
+void validate_shamir_parameters(const ShamirParameters& parameters) {
+    const auto [p, c_a, c_b, d_a, d_b] = parameters;
+    const auto expected = make_shamir_parameters(p, c_a, c_b);
+    if (d_a != expected.d_a || d_b != expected.d_b) {
+        throw std::invalid_argument("D_A или D_B не соответствует обратному показателю.");
+    }
+}
+
+ShamirSteps shamir_exchange(long long message, const ShamirParameters& parameters) {
+    validate_shamir_parameters(parameters);
+    const auto [p, c_a, c_b, d_a, d_b] = parameters;
+    if (message < 0 || message >= p) {
+        throw std::invalid_argument("Нужно 0 <= сообщение < p.");
+    }
+    const auto x1 = mod_pow(message, c_a, p);
+    const auto x2 = mod_pow(x1, c_b, p);
+    const auto x3 = mod_pow(x2, d_a, p);
+    const auto x4 = mod_pow(x3, d_b, p);
+    return {x1, x2, x3, x4};
+}
+
 } // namespace crypto

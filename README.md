@@ -58,6 +58,25 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab03/tests.cpp common/crypto.c
 - [Описание, условия и примеры](labs/lab03/README.md).
 - [Подробный локальный отчёт](local/reports/lab03.md) — не входит в Git.
 
+## Четвёртая лабораторная
+
+```sh
+mkdir -p build
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab04/main.cpp common/crypto.cpp -o build/lab04
+./build/lab04
+```
+
+Шифр Шамира для любых файлов: ручные параметры, генерация, отдельное расшифрование и пример лекции. Для файлов нужен простой модуль p>255. Сохраните показанный D_B для расшифрования. Программа не перезаписывает существующие файлы.
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab04/tests.cpp common/crypto.cpp -o build/lab04_tests
+./build/lab04_tests
+```
+
+- [Инструкция и файловый пример](labs/lab04/README.md).
+- [Подробный локальный отчёт](local/reports/lab04.md).
+- [Лабы 1–4 коротко и понятно](local/reports/labs01-04-short.md) — теория, расчёты, основные строки кода и проверка через меню. Оба отчёта находятся вне Git.
+
 ## Где что лежит
 
 | Папка / файл | Назначение |
@@ -68,6 +87,7 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab03/tests.cpp common/crypto.c
 | `labs/lab01/` | Меню и проверки первой лабораторной |
 | `labs/lab02/` | Меню и проверки второй лабораторной |
 | `labs/lab03/` | Меню и проверки третьей лабораторной |
+| `labs/lab04/` | Шифр Шамира, работа с файлами, меню и проверки |
 | `templates/lab/` | Простой макет для следующей лабораторной |
 | `templates/report.md` | Единый план подробного отчёта |
 | `local/` | Личные отчёты, исходные копии примеров, результаты проверок; игнорируется Git |
@@ -86,12 +106,12 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab03/tests.cpp common/crypto.c
 ```sh
 openspec list --specs
 openspec validate --all --strict --no-interactive
-openspec new change lab04-shamir
-openspec status --change lab04-shamir
-openspec instructions proposal --change lab04-shamir
+openspec new change lab05-elgamal
+openspec status --change lab05-elgamal
+openspec instructions proposal --change lab05-elgamal
 ```
 
-Последние три команды — для начала четвёртой лабораторной, она пока не реализована. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab04-shamir --yes`. Обновляется `openspec/progress.md`.
+Последние три команды — для начала пятой лабораторной, она пока не реализована. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab05-elgamal --yes`. Обновляется `openspec/progress.md`.
 
 Это сохранённые сведения о проекте, а не автоматическая запись всех сообщений чата: решения и прогресс нужно поддерживать актуальными. Формат и команды: [официальная документация OpenSpec](https://github.com/Fission-AI/OpenSpec/blob/main/docs/cli.md).
 

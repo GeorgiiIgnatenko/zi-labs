@@ -77,4 +77,31 @@ DiffieHellmanResult diffie_hellman(long long p, long long g, long long x_a, long
 // Выбирает простые p=2q+1 и q, подходящее g и оба секрета внутри функции.
 DiffieHellmanParameters generate_diffie_hellman_parameters();
 
+struct ShamirParameters {
+    long long p;
+    long long c_a;
+    long long c_b;
+    long long d_a;
+    long long d_b;
+};
+
+struct ShamirSteps {
+    long long x1;
+    long long x2;
+    long long x3;
+    long long x4;
+};
+
+// Обратное a по модулю: a*d % modulus == 1.
+// 2 <= modulus <= max_number, 1 <= a < modulus, gcd(a, modulus) == 1.
+long long mod_inverse(long long a, long long modulus);
+
+// Простое 5 <= p <= max_number; 2 < c_a,c_b < p-1, оба взаимно просты с p-1.
+ShamirParameters make_shamir_parameters(long long p, long long c_a, long long c_b);
+ShamirParameters generate_shamir_parameters();
+void validate_shamir_parameters(const ShamirParameters& parameters);
+
+// Все четыре шага для одного числа 0 <= message < p (пример из лекции).
+ShamirSteps shamir_exchange(long long message, const ShamirParameters& parameters);
+
 } // namespace crypto
