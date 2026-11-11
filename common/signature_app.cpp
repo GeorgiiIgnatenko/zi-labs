@@ -117,46 +117,28 @@ int command(SignatureAlgorithm algorithm, const std::vector<std::string>& args) 
 }
 
 void menu(SignatureAlgorithm algorithm) {
-    std::cout << "Учебная подпись " << signature_files::algorithm_name(algorithm)
-              << ". MD5, числа до 2 млрд; не промышленная реализация стандарта.\n";
+    const auto name = algorithm == SignatureAlgorithm::elgamal ? "Эль-Гамаля"
+        : (algorithm == SignatureAlgorithm::gost94 ? "ГОСТ Р 34.10-94" : "DSA");
+    std::cout << "Подпись " << name << '\n';
     while (true) {
         try {
-            std::cout << "\n1. Создать случайные ключи\n2. Создать ключи вручную\n"
-                         "3. Подписать файл\n4. Проверить подпись\n5. Пример лекции\n"
-                         "6. Ручной числовой пример (h и k)\n0. Выход\n";
+            std::cout << "\n1. Создать ключи\n2. Подписать файл\n3. Проверить подпись\n0. Выход\n";
             const auto choice = read_number("Пункт: ");
             if (choice == 0) {
                 return;
             }
-            if (choice == 5) {
-                demo(algorithm);
-            } else if (choice == 1 || choice == 2 || choice == 6) {
-                crypto::SignatureKeyPair key;
-                if (choice == 1) {
-                    key = crypto::generate_signature_key(algorithm);
-                } else {
-                    const auto p = read_number("p (простое): ");
-                    const auto q = algorithm == SignatureAlgorithm::elgamal ? 0 : read_number("q (простое, делит p-1): ");
-                    const auto g = read_number("g (a для ГОСТ/DSA): ");
-                    const auto x = read_number("Секретный x: ");
-                    key = crypto::make_signature_key(algorithm, p, q, g, x);
-                }
-                if (choice == 6) {
-                    const auto h = read_number("Число h: ");
-                    const auto k = read_number("Одноразовое k: ");
-                    show_number(key, h, k);
-                } else {
-                    const auto private_path = read_line("Новый файл секретного ключа: ");
-                    const auto public_path = read_line("Новый файл открытого ключа: ");
-                    signature_files::save_key_pair(private_path, public_path, key);
-                    print_public(key.public_key);
-                    std::cout << "Ключи сохранены.\n";
-                }
-            } else if (choice == 3 || choice == 4) {
-                const auto source = read_line("Исходный файл (в меню путь без кавычек): ");
-                const auto key = read_line(choice == 3 ? "Файл секретного ключа: " : "Файл открытого ключа: ");
-                const auto signature = read_line(choice == 3 ? "Новый файл подписи: " : "Файл подписи: ");
-                command(algorithm, {choice == 3 ? "sign" : "verify", source, key, signature});
+            if (choice == 1) {
+                const auto key = crypto::generate_signature_key(algorithm);
+                const auto private_path = read_line("Новый файл секретного ключа: ");
+                const auto public_path = read_line("Новый файл открытого ключа: ");
+                signature_files::save_key_pair(private_path, public_path, key);
+                print_public(key.public_key);
+                std::cout << "Ключи сохранены.\n";
+            } else if (choice == 2 || choice == 3) {
+                const auto source = read_line("Исходный файл: ");
+                const auto key = read_line(choice == 2 ? "Файл секретного ключа: " : "Файл открытого ключа: ");
+                const auto signature = read_line(choice == 2 ? "Новый файл подписи: " : "Файл подписи: ");
+                command(algorithm, {choice == 2 ? "sign" : "verify", source, key, signature});
             } else {
                 std::cout << "Нет такого пункта.\n";
             }
