@@ -304,4 +304,145 @@ ShamirSteps shamir_exchange(long long message, const ShamirParameters& parameter
     return {x1, x2, x3, x4};
 }
 
+namespace {
+void check_signature_algorithm(SignatureAlgorithm algorithm) {
+    if (algorithm != SignatureAlgorithm::elgamal && algorithm != SignatureAlgorithm::gost94 &&
+        algorithm != SignatureAlgorithm::dsa) {
+        throw std::invalid_argument("Неизвестный алгоритм подписи.");
+    }
+}
+
+void check_signature_hash(long long h, const SignaturePublicKey& key) {
+    const bool elgamal = key.algorithm == SignatureAlgorithm::elgamal;
+    const auto minimum = elgamal ? 2 : (key.algorithm == SignatureAlgorithm::gost94 ? 1 : 0);
+    if (h < minimum || h >= (elgamal ? key.p : key.q)) {
+        throw std::invalid_argument("Хеш вне диапазона алгоритма.");
+    }
+}
+
+std::optional<Signature> sign_hash_validated(long long h, const SignatureKeyPair& key, long long k) {
+    const auto& pub = key.public_key;
+    if (pub.algorithm == SignatureAlgorithm::elgamal) {
+        if (k <= 1 || k >= pub.p - 1 || extended_gcd(k, pub.p - 1).gcd != 1) {
+            throw std::invalid_argument("Эль-Гамаль: 1<k<p-1, НОД(k,p-1)=1.");
+        }
+        const auto r = mod_pow(pub.g, k, pub.p);
+        // Сначала остаток произведения, затем нормализация отрицательной разности.
+        const auto u = (h - key.x * r % (pub.p - 1) + pub.p - 1) % (pub.p - 1);
+        return Signature{r, mod_inverse(k, pub.p - 1) * u % (pub.p - 1)};
+    }
+    if (k < 1 || k >= pub.q) {
+        throw std::invalid_argument("ГОСТ/DSA: нужно 0<k<q.");
+    }
+    const auto r = mod_pow(pub.g, k, pub.p) % pub.q;
+    if (r == 0) {
+        return std::nullopt;
+    }
+    // Сокращаем каждое произведение до сложения; тройных произведений нет.
+    const auto s = pub.algorithm == SignatureAlgorithm::gost94
+        ? (k * h % pub.q + key.x * r % pub.q) % pub.q
+        : mod_inverse(k, pub.q) * ((h + key.x * r % pub.q) % pub.q) % pub.q;
+    if (s == 0) {
+        return std::nullopt;
+    }
+    return Signature{r, s};
+}
+} // namespace
+
+void validate_signature_public_key(const SignaturePublicKey& key) {
+    check_signature_algorithm(key.algorithm);
+    if (key.p < 5 || key.p > max_number || !is_prime(key.p) ||
+        key.g < 2 || key.g >= key.p || key.y < 2 || key.y >= key.p) {
+        throw std::invalid_argument("Нужны простое 5<=p<=2000000000, 1<g,y<p.");
+    }
+    if (key.algorithm == SignatureAlgorithm::elgamal) {
+        if (key.q != 0 || !is_primitive_root(key.g, key.p)) {
+            throw std::invalid_argument("Эль-Гамаль: q=0, g — первообразный корень.");
+        }
+    } else if (key.q < 3 || key.q >= key.p || !is_prime(key.q) ||
+               (key.p - 1) % key.q != 0 || mod_pow(key.g, key.q, key.p) != 1 ||
+               mod_pow(key.y, key.q, key.p) != 1) {
+        throw std::invalid_argument("ГОСТ/DSA: простое q>=3 делит p-1; g и y имеют порядок q.");
+    }
+}
+
+void validate_signature_key_pair(const SignatureKeyPair& key) {
+    validate_signature_public_key(key.public_key);
+    const bool elgamal = key.public_key.algorithm == SignatureAlgorithm::elgamal;
+    if (key.x < (elgamal ? 2 : 1) || key.x >= (elgamal ? key.public_key.p - 1 : key.public_key.q) ||
+        mod_pow(key.public_key.g, key.x, key.public_key.p) != key.public_key.y) {
+        throw std::invalid_argument("Секретный x вне диапазона либо не соответствует открытому y.");
+    }
+}
+
+SignatureKeyPair make_signature_key(SignatureAlgorithm algorithm, long long p,
+                                    long long q, long long g, long long x) {
+    // mod_pow сам проверяет границы до умножений.
+    SignatureKeyPair key{{algorithm, p, q, g, mod_pow(g, x, p)}, x};
+    validate_signature_key_pair(key);
+    return key;
+}
+
+SignatureKeyPair generate_signature_key(SignatureAlgorithm algorithm) {
+    check_signature_algorithm(algorithm);
+    const auto dh = generate_diffie_hellman_parameters();
+    if (algorithm == SignatureAlgorithm::elgamal) {
+        return make_signature_key(algorithm, dh.p, 0, dh.g, random_number(2, dh.p - 2));
+    }
+    const auto q = (dh.p - 1) / 2;
+    const auto a = mod_pow(dh.g, 2, dh.p); // Порядок g равен 2q, порядок g^2 равен q.
+    return make_signature_key(algorithm, dh.p, q, a, random_number(1, q - 1));
+}
+
+std::optional<Signature> sign_hash(long long h, const SignatureKeyPair& key, long long k) {
+    validate_signature_key_pair(key);
+    check_signature_hash(h, key.public_key);
+    return sign_hash_validated(h, key, k);
+}
+
+Signature sign_hash_random(long long h, const SignatureKeyPair& key) {
+    validate_signature_key_pair(key);
+    check_signature_hash(h, key.public_key);
+    const auto& pub = key.public_key;
+    for (int attempt = 0; attempt < 4096; ++attempt) {
+        const auto k = pub.algorithm == SignatureAlgorithm::elgamal
+            ? random_number(2, pub.p - 2) : random_number(1, pub.q - 1);
+        if (pub.algorithm == SignatureAlgorithm::elgamal && extended_gcd(k, pub.p - 1).gcd != 1) {
+            continue;
+        }
+        if (const auto signature = sign_hash_validated(h, key, k)) {
+            return *signature;
+        }
+    }
+    throw std::runtime_error("Не удалось выбрать k: попробуйте другие параметры ключа.");
+}
+
+bool verify_hash(long long h, const SignaturePublicKey& key, const Signature& signature) {
+    validate_signature_public_key(key);
+    check_signature_hash(h, key);
+    const auto [r, s] = signature;
+    if (key.algorithm == SignatureAlgorithm::elgamal) {
+        if (r < 1 || r >= key.p || s < 0 || s >= key.p - 1) {
+            return false;
+        }
+        return mod_pow(key.y, r, key.p) * mod_pow(r, s, key.p) % key.p == mod_pow(key.g, h, key.p);
+    }
+    if (r < 1 || r >= key.q || s < 1 || s >= key.q) {
+        return false;
+    }
+    long long u1;
+    long long u2;
+    if (key.algorithm == SignatureAlgorithm::gost94) {
+        const auto inverse = mod_inverse(h, key.q);
+        u1 = s * inverse % key.q;
+        u2 = (key.q - r * inverse % key.q) % key.q;
+    } else {
+        const auto inverse = mod_inverse(s, key.q);
+        u1 = h * inverse % key.q;
+        u2 = r * inverse % key.q;
+    }
+    const auto v = (mod_pow(key.g, u1, key.p) * mod_pow(key.y, u2, key.p) % key.p) % key.q;
+    return v == r;
+}
+
 } // namespace crypto

@@ -104,4 +104,36 @@ void validate_shamir_parameters(const ShamirParameters& parameters);
 // Все четыре шага для одного числа 0 <= message < p (пример из лекции).
 ShamirSteps shamir_exchange(long long message, const ShamirParameters& parameters);
 
+enum class SignatureAlgorithm { elgamal, gost94, dsa };
+
+struct SignaturePublicKey {
+    SignatureAlgorithm algorithm;
+    long long p;
+    long long q; // Для Эль-Гамаля q=0; для ГОСТ/DSA — простой порядок подгруппы.
+    long long g; // В лекции для ГОСТ/DSA обозначается a.
+    long long y;
+};
+
+struct SignatureKeyPair {
+    SignaturePublicKey public_key;
+    long long x;
+};
+
+struct Signature {
+    long long r;
+    long long s;
+};
+
+void validate_signature_public_key(const SignaturePublicKey& key);
+void validate_signature_key_pair(const SignatureKeyPair& key);
+SignatureKeyPair make_signature_key(SignatureAlgorithm algorithm, long long p,
+                                    long long q, long long g, long long x);
+SignatureKeyPair generate_signature_key(SignatureAlgorithm algorithm);
+
+// Числовая демонстрация: Эль-Гамаль 1<h<p, ГОСТ 0<h<q, DSA 0<=h<q.
+// k задаётся явно; nullopt означает r=0 или s=0 в ГОСТ/DSA: выбрать другое k.
+std::optional<Signature> sign_hash(long long h, const SignatureKeyPair& key, long long k);
+Signature sign_hash_random(long long h, const SignatureKeyPair& key);
+bool verify_hash(long long h, const SignaturePublicKey& key, const Signature& signature);
+
 } // namespace crypto

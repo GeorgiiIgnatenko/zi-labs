@@ -77,6 +77,29 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab04/tests.cpp common/crypto.c
 - [Подробный локальный отчёт](local/reports/lab04.md).
 - [Лабы 1–4 коротко и понятно](local/reports/labs01-04-short.md) — теория, расчёты, основные строки кода и проверка через меню. Оба отчёта находятся вне Git.
 
+## Лабораторные 9, 10 и 11 — электронные подписи
+
+По текущей очередности лабораторные 5–8 пропущены. Готовы подписи Эль-Гамаля (№9), ГОСТ Р 34.10-94 (№10) и DSA/FIPS 186 из лекции (№11). Общие меню, работа с любыми файлами, MD5 и отдельные ключи/подписи; различаются математические формулы.
+
+```sh
+mkdir -p build
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab09/main.cpp common/crypto.cpp common/signature_files.cpp common/signature_app.cpp -o build/lab09
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab10/main.cpp common/crypto.cpp common/signature_files.cpp common/signature_app.cpp -o build/lab10
+g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab11/main.cpp common/crypto.cpp common/signature_files.cpp common/signature_app.cpp -o build/lab11
+./build/lab09 demo
+./build/lab10 demo
+./build/lab11 demo
+```
+
+Без аргументов открывается меню. Доступны команды `keygen`, `sign`, `verify`, `number`, `hash`, `--help`. Существующие выходные файлы не перезаписываются. Проверка использует отдельный открытый ключ, секретный ключ ей не нужен.
+
+- [№9: сборка, запуск, проверки](labs/lab09/README.md), [подробный отчёт](local/reports/lab09.md).
+- [№10: сборка, запуск, проверки](labs/lab10/README.md), [подробный отчёт](local/reports/lab10.md).
+- [№11: сборка, запуск, проверки](labs/lab11/README.md), [подробный отчёт](local/reports/lab11.md).
+- **[Общий отчёт: шаблон программы, различия алгоритмов, ручные примеры и показ на защите](local/reports/labs09-11.md).**
+
+Сохранён учебный предел p≤2 млрд. MD5 разрешён заданием; это учебные реализации формул, без стандартных больших ключей и совместимости с промышленными криптографическими форматами. Подробные отчёты остаются вне Git.
+
 ## Где что лежит
 
 | Папка / файл | Назначение |
@@ -88,6 +111,7 @@ g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 labs/lab04/tests.cpp common/crypto.c
 | `labs/lab02/` | Меню и проверки второй лабораторной |
 | `labs/lab03/` | Меню и проверки третьей лабораторной |
 | `labs/lab04/` | Шифр Шамира, работа с файлами, меню и проверки |
+| `labs/lab09/`, `labs/lab10/`, `labs/lab11/` | Электронные подписи: Эль-Гамаль, ГОСТ-94 и DSA |
 | `templates/lab/` | Простой макет для следующей лабораторной |
 | `templates/report.md` | Единый план подробного отчёта |
 | `local/` | Личные отчёты, исходные копии примеров, результаты проверок; игнорируется Git |
@@ -111,8 +135,8 @@ openspec status --change lab05-elgamal
 openspec instructions proposal --change lab05-elgamal
 ```
 
-Последние три команды — для начала пятой лабораторной, она пока не реализована. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab05-elgamal --yes`. Обновляется `openspec/progress.md`.
+Последние три команды — пример начала пятой лабораторной, она пока не реализована; текущая просьба пользователя пропускает 5–8 и завершает 9–11. После описания требований и реализации заполняются `tasks.md`, выполняются проверки и `openspec archive lab05-elgamal --yes`. Обновляется `openspec/progress.md`.
 
 Это сохранённые сведения о проекте, а не автоматическая запись всех сообщений чата: решения и прогресс нужно поддерживать актуальными. Формат и команды: [официальная документация OpenSpec](https://github.com/Fission-AI/OpenSpec/blob/main/docs/cli.md).
 
-Git локальный, ветка `main`, без удалённого репозитория. Папка `local/` не попадёт ни в коммит, ни в копию репозитория через Git; для сохранности отчётов нужна отдельная копия этой папки.
+Репозиторий: [GeorgiiIgnatenko/zi-labs](https://github.com/GeorgiiIgnatenko/zi-labs), основная ветка `main`. SSH-адрес: `git@github.com:GeorgiiIgnatenko/zi-labs.git`. Папка `local/` не попадёт ни в коммит, ни в копию репозитория через Git; для сохранности отчётов нужна отдельная копия этой папки.
